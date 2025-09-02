@@ -25,10 +25,13 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true, length = 255)
     private String email;
+
+    @Column(length = 255)
     private String password;
 
-
+    @Column(nullable = false)
     private boolean enabled = false; // email verified
 
     @ElementCollection(fetch = FetchType.EAGER)
@@ -37,10 +40,14 @@ public class User {
     @Builder.Default
     private Set<String> roles = new HashSet<>();
 
+    @Column(length = 50)
     private String provider;
+
+    @Column(length = 255)
     private String providerId;
 
 
+    @Column(nullable = false)
     private Instant createdAt = Instant.now();
 
     // convenience helper
