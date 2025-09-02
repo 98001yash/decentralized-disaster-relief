@@ -22,6 +22,12 @@ spring:
               - DELETE
               - OPTIONS
 
+        routes:
+          - id: auth-service
+            uri: lb://auth-service
+            predicates:
+              - Path=/auth/**
+
 
 
 
