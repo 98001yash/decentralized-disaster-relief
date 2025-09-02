@@ -17,5 +17,6 @@ public class AuthResponse {
     private String token;
     private String email;
     private boolean enabled;
+    private Long expiresInMs;
     private Set<String> roles;
 }
