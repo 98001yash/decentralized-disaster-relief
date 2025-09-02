@@ -28,6 +28,11 @@ spring:
             predicates:
               - Path=/auth/**
 
+          - id: org-service
+            uri: lb://org-service
+            predicates:
+              - Path=/org/**
+
 
 
 
