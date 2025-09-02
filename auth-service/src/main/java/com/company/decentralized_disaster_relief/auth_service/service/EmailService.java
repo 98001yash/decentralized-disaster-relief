@@ -6,6 +6,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class EmailService {
 
+
+    // TODO : implement it in the notification service in the future
+
     public void sendVerificationEmail(String toEmail, String verificationUrl) {
         // replace with actual mail sender
         System.out.println("[EMAIL] Verification link for " + toEmail + " -> " + verificationUrl);
