@@ -29,6 +29,7 @@ public class Org {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
     @Column(nullable = false, length = 255)
     private String name;
 
@@ -48,21 +49,28 @@ public class Org {
     @Column(columnDefinition = "text")
     private String address;
 
-    // Verification state machine
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     @Builder.Default
     private OrgStatus status = OrgStatus.PENDING;
 
-    @Column(nullable =false)
+
+    @Column(nullable = false)
     @Builder.Default
     private boolean verified = false;
 
 
-    @Column(length = 20)
+    @Column(length = 32)
     private String verificationLevel;
 
     private Long verifiedByUserId;
+    private Instant verifiedAt;
+
+    @Column(columnDefinition = "text")
+    private String verificationNotes;
+
+    // Audit
+    private Long createdByUserId;
     private Long updatedByUserId;
 
     @Column(nullable = false, updatable = false)
@@ -72,17 +80,16 @@ public class Org {
     private Instant updatedAt;
 
     @PrePersist
-    protected void onCreate(){
+    protected void onCreate() {
         Instant now = Instant.now();
         this.createdAt = now;
         this.updatedAt = now;
-
-        this.verified = (this.status ==OrgStatus.VERIFIED);
+        this.verified = (this.status == OrgStatus.VERIFIED);
     }
 
     @PreUpdate
-    protected void onUpdate(){
+    protected void onUpdate() {
         this.updatedAt = Instant.now();
-        this.verified = (this.status ==OrgStatus.VERIFIED);
+        this.verified = (this.status == OrgStatus.VERIFIED);
     }
 }
