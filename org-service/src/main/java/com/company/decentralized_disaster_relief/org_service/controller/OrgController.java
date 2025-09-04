@@ -2,9 +2,7 @@ package com.company.decentralized_disaster_relief.org_service.controller;
 
 
 import com.company.decentralized_disaster_relief.org_service.auth.AuthFlags;
-import com.company.decentralized_disaster_relief.org_service.dtos.OrgCreateRequest;
-import com.company.decentralized_disaster_relief.org_service.dtos.OrgResponse;
-import com.company.decentralized_disaster_relief.org_service.dtos.OrgUpdateRequest;
+import com.company.decentralized_disaster_relief.org_service.dtos.*;
 import com.company.decentralized_disaster_relief.org_service.repository.OrgRepository;
 import com.company.decentralized_disaster_relief.org_service.service.OrgService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +13,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -57,5 +57,23 @@ public class OrgController {
         OrgResponse updated = orgService.updateOrg(id, req, requester, isPlatformAdmin);
         log.info("Org updated id={} by userId={}", id, requester);
         return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/{id}/members")
+    public ResponseEntity<OrgMemberResponse> addMember(
+            @PathVariable("id") Long id,
+             @RequestBody OrgMemberCreateRequest req) {
+
+        Long requester = AuthFlags.requireUserId();
+        boolean isPlatformAdmin = AuthFlags.isPlatformAdmin();
+        OrgMemberResponse member = orgService.addMember(id, req, requester, isPlatformAdmin);
+        log.info("Added member userId={} role={} to orgId={} by requester={}", member.getUserId(), member.getRole(), id, requester);
+        return ResponseEntity.status(HttpStatus.CREATED).body(member);
+    }
+
+    @GetMapping("/{id}/members")
+    public ResponseEntity<List<OrgMemberResponse>> listMembers(@PathVariable("id") Long id) {
+        List<OrgMemberResponse> members = orgService.listMembers(id);
+        return ResponseEntity.ok(members);
     }
 }
