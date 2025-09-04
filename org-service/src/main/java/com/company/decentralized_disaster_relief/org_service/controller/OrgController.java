@@ -4,6 +4,7 @@ package com.company.decentralized_disaster_relief.org_service.controller;
 import com.company.decentralized_disaster_relief.org_service.auth.AuthFlags;
 import com.company.decentralized_disaster_relief.org_service.dtos.OrgCreateRequest;
 import com.company.decentralized_disaster_relief.org_service.dtos.OrgResponse;
+import com.company.decentralized_disaster_relief.org_service.dtos.OrgUpdateRequest;
 import com.company.decentralized_disaster_relief.org_service.repository.OrgRepository;
 import com.company.decentralized_disaster_relief.org_service.service.OrgService;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,17 @@ public class OrgController {
             @PageableDefault(size = 20) Pageable pageable){
          Page<OrgResponse> page = orgService.listOrgs(q, pageable);
          return ResponseEntity.ok(page);
+    }
 
+    @PatchMapping("/{id}")
+    public ResponseEntity<OrgResponse> updateOrg(
+            @PathVariable("id") Long id,
+            @RequestBody OrgUpdateRequest req
+            ){
+        Long requester = AuthFlags.requireUserId();
+        boolean isPlatformAdmin = AuthFlags.isPlatformAdmin();
+        OrgResponse updated = orgService.updateOrg(id, req, requester, isPlatformAdmin);
+        log.info("Org updated id={} by userId={}", id, requester);
+        return ResponseEntity.ok(updated);
     }
 }
