@@ -23,7 +23,6 @@ import java.util.List;
 public class OrgController {
 
     private final OrgService orgService;
-    private final OrgRepository orgRepository;
 
     @PostMapping
     public ResponseEntity<OrgResponse> createOrg(@RequestBody OrgCreateRequest req){
@@ -76,4 +75,31 @@ public class OrgController {
         List<OrgMemberResponse> members = orgService.listMembers(id);
         return ResponseEntity.ok(members);
     }
+
+
+    @PostMapping("/{id}/verify")
+    public ResponseEntity<OrgResponse> verifyOrg(
+            @PathVariable("id") Long id,
+            @RequestBody(required = false) OrgVerifyRequest verifyRequest) {
+
+        Long verifierUserId = AuthFlags.requireUserId();
+        boolean canVerify = AuthFlags.isPlatformVerifier() || AuthFlags.isPlatformAdmin();
+        OrgResponse resp = orgService.verifyOrg(id, verifyRequest, verifierUserId, canVerify);
+        log.info("Org id={} verified by userId={}", id, verifierUserId);
+        return ResponseEntity.ok(resp);
+    }
+
+
+    @PostMapping("/{id}/reject")
+    public ResponseEntity<OrgResponse> rejectOrg(
+            @PathVariable("id") Long id,
+            @RequestBody OrgRejectRequest rejectRequest) {
+
+        Long verifierUserId = AuthFlags.requireUserId();
+        boolean canVerify = AuthFlags.isPlatformVerifier() || AuthFlags.isPlatformAdmin();
+        OrgResponse resp = orgService.rejectOrg(id, rejectRequest, verifierUserId, canVerify);
+        log.info("Org id={} rejected by userId={} reason={}", id, verifierUserId, rejectRequest.getReason());
+        return ResponseEntity.ok(resp);
+    }
+
 }
