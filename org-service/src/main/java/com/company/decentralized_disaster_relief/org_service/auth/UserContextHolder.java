@@ -6,29 +6,26 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class UserContextHolder {
+public final class UserContextHolder {
 
     private static final ThreadLocal<Long> CURRENT_USER_ID = new ThreadLocal<>();
     private static final ThreadLocal<Set<String>> CURRENT_ROLES = new ThreadLocal<>();
 
+    private UserContextHolder() { /* utility */ }
 
     public static Long getCurrentUserId() {
         return CURRENT_USER_ID.get();
     }
 
     static void setCurrentUserId(Long userId) {
-        if (userId == null) {
-            CURRENT_USER_ID.remove();
-        } else {
-            CURRENT_USER_ID.set(userId);
-        }
+        if (userId == null) CURRENT_USER_ID.remove();
+        else CURRENT_USER_ID.set(userId);
     }
 
     public static Set<String> getCurrentRoles() {
-        Set<String> roles = CURRENT_ROLES.get();
-        return roles == null ? Collections.emptySet() : Collections.unmodifiableSet(roles);
+        Set<String> s = CURRENT_ROLES.get();
+        return s == null ? Collections.emptySet() : Collections.unmodifiableSet(s);
     }
-
 
     static void setCurrentRoles(Set<String> roles) {
         if (roles == null || roles.isEmpty()) {
@@ -38,20 +35,17 @@ public class UserContextHolder {
         }
     }
 
-    static void setCurrentRolesFromHeader(String commaSeparatedRoles) {
-        if (commaSeparatedRoles == null || commaSeparatedRoles.isBlank()) {
+    static void setCurrentRolesFromHeader(String commaSeparated) {
+        if (commaSeparated == null || commaSeparated.isBlank()) {
             CURRENT_ROLES.remove();
             return;
         }
-        Set<String> roles = Arrays.stream(commaSeparatedRoles.split(","))
+        Set<String> roles = Arrays.stream(commaSeparated.split(","))
                 .map(String::trim)
-                .filter(s -> !s.isEmpty())
+                .filter(r -> !r.isEmpty())
                 .collect(Collectors.toSet());
-        if (roles.isEmpty()) {
-            CURRENT_ROLES.remove();
-        } else {
-            CURRENT_ROLES.set(roles);
-        }
+        if (roles.isEmpty()) CURRENT_ROLES.remove();
+        else CURRENT_ROLES.set(roles);
     }
 
     public static boolean hasRole(String role) {
@@ -59,7 +53,6 @@ public class UserContextHolder {
         return getCurrentRoles().contains(role);
     }
 
-    // ---------- cleanup ----------
     static void clear() {
         CURRENT_USER_ID.remove();
         CURRENT_ROLES.remove();

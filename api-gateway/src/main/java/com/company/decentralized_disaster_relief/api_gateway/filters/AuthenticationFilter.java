@@ -27,11 +27,11 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<AbstractG
     private static final Set<String> DEFAULT_PUBLIC_PATHS = Set.of(
             "/auth/login",
             "/auth/signup",
-            "/auth/forgot-password",
-            "auth/reset-password",
-            "auth/verify/**",
             "/actuator/health",
-            "/actuator/info"
+            "/actuator/info",
+            "auth/forgot-password",
+            "auth/reset-password",
+            "auth/verify/**"
     );
 
     public AuthenticationFilter(JwtService jwtService) {
@@ -43,21 +43,18 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<AbstractG
     public GatewayFilter apply(NameConfig config) {
         return (exchange, chain) -> {
             String path = exchange.getRequest().getURI().getPath();
-            HttpMethod method = exchange.getRequest().getMethod();
 
-            // Allow CORS preflight through
-            if (HttpMethod.OPTIONS.equals(method)) {
+            // allow CORS preflight
+            if (HttpMethod.OPTIONS.equals(exchange.getRequest().getMethod())) {
                 return chain.filter(exchange);
             }
 
-            // Skip public paths
             if (isPublicPath(path)) {
                 log.debug("Public path, skipping authentication: {}", path);
                 return chain.filter(exchange);
             }
 
             final String tokenHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
-
             if (tokenHeader == null || !tokenHeader.startsWith("Bearer ")) {
                 log.warn("Authorization header missing or invalid for path {}", path);
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
@@ -65,24 +62,18 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<AbstractG
             }
 
             final String token = tokenHeader.substring(7).trim();
-
             try {
-                // Use your JwtService to validate & extract claims
-                // JwtService should throw JwtException for invalid/expired tokens
-                Claims claims = jwtService.extractAllClaims(token);
+                Claims claims = jwtService.extractAllClaims(token); // must return io.jsonwebtoken.Claims
 
-                // Extract user id (subject or custom claim)
                 String userId = extractUserIdFromClaims(claims);
                 if (userId == null || userId.isBlank()) {
-                    log.warn("User id claim missing in token for path {}", path);
+                    log.warn("User id missing in token for path {}", path);
                     exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                     return exchange.getResponse().setComplete();
                 }
 
-                // Extract roles: try "roles" claim (could be List or String). Fallback to "authorities".
-                String rolesHeader = extractRolesHeaderFromClaims(claims);
+                String rolesHeader = extractRolesHeaderFromClaims(claims); // e.g. "ROLE_USER,ROLE_ADMIN"
 
-                // Build modified exchange with headers forwarded
                 ServerWebExchange modifiedExchange = exchange.mutate()
                         .request(r -> {
                             r.header("X-User-Id", userId);
@@ -95,7 +86,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<AbstractG
                         })
                         .build();
 
-                log.debug("Authenticated user ID: {} roles: {} path: {}", userId, rolesHeader, path);
+                log.debug("Authenticated userId={} roles={} path={}", userId, rolesHeader, path);
                 return chain.filter(modifiedExchange);
 
             } catch (JwtException e) {
@@ -103,8 +94,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<AbstractG
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             } catch (Exception ex) {
-                // Defensive catch: do not leak internal errors
-                log.error("Unexpected error in authentication filter for path {}: {}", path, ex.getMessage(), ex);
+                log.error("Unexpected error in auth filter for path {}: {}", path, ex.getMessage(), ex);
                 exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
                 return exchange.getResponse().setComplete();
             }
@@ -117,37 +107,30 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<AbstractG
     }
 
     private String extractUserIdFromClaims(Claims claims) {
-        // Common places: subject (sub) or custom claim "userId"
-        if (claims.getSubject() != null) {
-            return claims.getSubject();
-        }
+        if (claims.getSubject() != null) return claims.getSubject();
         Object uid = claims.get("userId");
-        if (uid != null) return uid.toString();
-        // fallback
-        return null;
+        return uid == null ? null : uid.toString();
     }
 
     @SuppressWarnings("unchecked")
     private String extractRolesHeaderFromClaims(Claims claims) {
-
         Object rolesObj = claims.get("roles");
         if (rolesObj == null) rolesObj = claims.get("authorities");
 
         if (rolesObj == null) return null;
 
         if (rolesObj instanceof List<?> list) {
-            List<String> rolesList = list.stream()
+            List<String> roles = list.stream()
                     .filter(Objects::nonNull)
                     .map(Object::toString)
                     .collect(Collectors.toList());
-            return String.join(",", rolesList);
+            return String.join(",", roles);
         } else {
-            // single string (maybe comma-separated)
             return rolesObj.toString();
         }
     }
 
     public static class Config {
-        // left intentionally empty
+        // empty
     }
 }

@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-@Component
 @Slf4j
+@Component
 public class UserInterceptor implements HandlerInterceptor {
 
     @Value("${security.internal-gateway-secret:}")
@@ -21,15 +21,23 @@ public class UserInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
+        // Optional enforcement: only accept header-set requests from trusted gateway
+        if (internalGatewaySecret != null && !internalGatewaySecret.isBlank()) {
+            String internal = request.getHeader(HEADER_INTERNAL);
+            if (!internalGatewaySecret.equals(internal)) {
+                log.warn("Missing or invalid internal gateway header; rejecting request");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return false;
+            }
+        }
 
-        // Parse user id header
         String userIdHdr = request.getHeader(HEADER_USER_ID);
         if (userIdHdr != null && !userIdHdr.isBlank()) {
             try {
                 Long userId = Long.valueOf(userIdHdr.trim());
                 UserContextHolder.setCurrentUserId(userId);
-            } catch (NumberFormatException nfe) {
-                log.warn("Invalid X-User-Id header value: {}", userIdHdr);
+            } catch (NumberFormatException e) {
+                log.warn("Invalid X-User-Id header: {}", userIdHdr);
             }
         }
 
@@ -43,7 +51,6 @@ public class UserInterceptor implements HandlerInterceptor {
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
-        // Always clear ThreadLocal to prevent leaks across requests handled by the same thread
         UserContextHolder.clear();
     }
 }
