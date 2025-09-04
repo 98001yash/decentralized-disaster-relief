@@ -1,4 +1,4 @@
-package com.company.decentralized_disaster_relief.org_service.auth;
+package com.company.decentralized_disaster_relief.auth_service.auth;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
