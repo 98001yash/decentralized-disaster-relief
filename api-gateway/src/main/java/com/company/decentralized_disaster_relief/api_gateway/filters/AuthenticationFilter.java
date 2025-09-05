@@ -31,7 +31,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<AbstractG
             "/actuator/info",
             "auth/forgot-password",
             "auth/reset-password",
-            "auth/verify/**"
+            "auth/verify"
     );
 
     public AuthenticationFilter(JwtService jwtService) {

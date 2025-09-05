@@ -1,9 +1,9 @@
-  jwt:
-    secretKey: mysupersecurekeyformysafarsaathijwt1234567890abcdefABCDEF1234567890
-
+# src/main/resources/application.yml
+jwt:
+  secretKey: mysupersecurekeyformysafarsaathijwt1234567890abcdefABCDEF1234567890
 
 security:
-    internal-gateway-secret:
+  internal-gateway-secret:
 
 server:
   port: 8081
@@ -26,25 +26,23 @@ spring:
               - PUT
               - DELETE
               - OPTIONS
+            allowedHeaders:
+              - "*"
 
-        routes:
-          - id: auth-service
-            uri: lb://auth-service
-            predicates:
-              - Path=/auth/**
-            filters:
-              - name: AuthenticationFilter
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/auth/**
+          filters:
+            - name: AuthenticationFilter
 
-          - id: org-service
-            uri: lb://org-service
-            predicates:
-              - Path=/org/**
-
-            filters:
-              - name: AuthenticationFilter
-
-
-
+        - id: org-service
+          uri: lb://org-service
+          predicates:
+            - Path=/orgs/**
+          filters:
+            - name: AuthenticationFilter
 
 eureka:
   client:
@@ -58,3 +56,4 @@ eureka:
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
+    com.company.decentralized_disaster_relief.api_gateway: DEBUG

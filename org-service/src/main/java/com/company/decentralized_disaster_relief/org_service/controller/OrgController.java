@@ -3,7 +3,6 @@ package com.company.decentralized_disaster_relief.org_service.controller;
 
 import com.company.decentralized_disaster_relief.org_service.auth.AuthFlags;
 import com.company.decentralized_disaster_relief.org_service.dtos.*;
-import com.company.decentralized_disaster_relief.org_service.repository.OrgRepository;
 import com.company.decentralized_disaster_relief.org_service.service.OrgService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +17,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/org")
+@RequestMapping("/orgs")
 @Slf4j
 public class OrgController {
 
